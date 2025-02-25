@@ -2,7 +2,11 @@ use std::{
     collections::HashSet,
     net::SocketAddr,
     process::exit,
-    sync::{Arc, atomic::AtomicBool, mpsc::{channel, Sender, Receiver}},
+    sync::{
+        Arc,
+        atomic::AtomicBool,
+        mpsc::{Receiver, Sender, channel},
+    },
     thread,
 };
 mod utils;
@@ -58,8 +62,7 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 fn create_gossip_socket() -> std::net::UdpSocket {
     // Bind the UDP socket to the specified address and port
     // let socket = std::net::UdpSocket::bind("127.0.0.1:8001").expect("Failed to bind gossip socket");
-    let socket = std::net::UdpSocket::bind("127.0.0.1:8001")
-        .expect("Failed to bind gossip socket");
+    let socket = std::net::UdpSocket::bind("127.0.0.1:8001").expect("Failed to bind gossip socket");
 
     // Set the socket to non-blocking mode for asynchronous operations
     socket.set_nonblocking(true).unwrap();
@@ -189,9 +192,7 @@ fn main() {
         while let Ok(data) = rx.recv() {
             // Forward data to RPC endpoint
             let client = reqwest::blocking::Client::new();
-            let res = client.post(rpc_url)
-                .json(&data)
-                .send();
+            let res = client.post(rpc_url).json(&data).send();
             if let Err(err) = res {
                 eprintln!("Failed to forward data to RPC: {}", err);
             }
