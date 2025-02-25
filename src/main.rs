@@ -2,7 +2,8 @@ use std::{
     collections::HashSet,
     net::SocketAddr,
     process::exit,
-    sync::{Arc, atomic::AtomicBool},
+    sync::{Arc, atomic::AtomicBool, mpsc::{channel, Sender, Receiver}},
+    thread,
 };
 mod utils;
 use solana_client::connection_cache::ConnectionCache;
@@ -56,7 +57,10 @@ fn setup_logging() -> Result<(), Box<dyn std::error::Error>> {
 /// The socket is bound to "127.0.0.1:8001" and is set to non-blocking mode.
 fn create_gossip_socket() -> std::net::UdpSocket {
     // Bind the UDP socket to the specified address and port
-    let socket = std::net::UdpSocket::bind("127.0.0.1:8001").expect("Failed to bind gossip socket");
+    // let socket = std::net::UdpSocket::bind("127.0.0.1:8001").expect("Failed to bind gossip socket");
+    let socket = std::net::UdpSocket::bind("127.0.0.1:8001")
+        .expect("Failed to bind gossip socket");
+
     // Set the socket to non-blocking mode for asynchronous operations
     socket.set_nonblocking(true).unwrap();
     socket
@@ -165,7 +169,7 @@ fn main() {
     // Start the gossip service:
     // - Pass in the cluster_info so the service knows about cluster peers.
     // - Use the independent gossip socket for communication.
-    // - The 'true' flag indicates that the service should connect to entrypoints if necessary.
+    // - The 'true' flag indicates that the service should connect to entrypoints if necessary.1
     // - Pass the exit flag to allow for graceful shutdown of the service.
     let gossip_service = GossipService::new(
         &cluster_info,
@@ -176,6 +180,23 @@ fn main() {
         None,
         exit.clone(),
     );
+
+    // Forward data to RPCs
+    type Transaction = String;
+    let (tx, rx): (Sender<Transaction>, Receiver<Transaction>) = channel();
+    let rpc_url = "http://rpc-endpoint.com"; // !!!! This RPC URL Needs to be changed to the actual RPC endpoint !!!!
+    thread::spawn(move || {
+        while let Ok(data) = rx.recv() {
+            // Forward data to RPC endpoint
+            let client = reqwest::blocking::Client::new();
+            let res = client.post(rpc_url)
+                .json(&data)
+                .send();
+            if let Err(err) = res {
+                eprintln!("Failed to forward data to RPC: {}", err);
+            }
+        }
+    });
 
     // Block the main thread until the gossip service terminates.
     gossip_service.join();
