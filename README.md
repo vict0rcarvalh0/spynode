@@ -13,19 +13,16 @@ The node will:
 - Avoid participating in the voting or block-building process.
 
 ## Code Overview
-The main components of the code are:
-- `setup_logging`: Configures the logging for the application.
-- `create_gossip_socket`: Creates and configures a UDP socket for the gossip service.
-- `main`: Initializes and runs the Solana gossip service.
+- **main.rs**  
+  - Initializes logging.  
+  - Creates a gossip socket and determines the node’s public IP.  
+  - Boots up a Solana gossip service via `GossipService::new`.  
+  - Declares a channel (tx, rx) pair of type `Transaction` (string).  
+  - Spawns a thread that forwards received transactions to a configured RPC endpoint.  
+  - Waits for the gossip service to finish.
 
-### Key Functions
-- `setup_logging`: Sets up the logging configuration.
-- `create_gossip_socket`: Creates a UDP socket bound to "127.0.0.1:8001" and sets it to non-blocking mode.
-- `main`: Initializes the node, sets up the gossip service, and configures the cluster information.
-
-### Key Modules
-- `solana-client`: Contains modules for connection caching, non-blocking operations, transaction execution, and RPC communication.
-- `solana-gossip`: Contains the gossip service implementation and related tests.
+- **utils.rs**  
+  - Houses helper methods such as `parse_host_port` for entrypoint URLs.
 
 ## How to Run
 1. Clone the repository:
