@@ -16,19 +16,6 @@ Forwards the captured transaction data through a local channel to an external RP
 
 Avoids all consensus participation: no voting, no staking, no leader scheduling.
 
-🧠 Architecture Overview
-text
-Copy
-Edit
- +----------------------+         +------------------+     
- | Solana Validator Set | <--->  |   Spynode (This) | -->  [RPC Listener / Forwarder]
- +----------------------+         +------------------+     
-                                        |
-                              [Transaction Channel]
-                                        |
-                              +--------------------+
-                              |  RPC/Webhook Sink  |
-                              +--------------------+
 🧾 Code Overview
 main.rs
 Sets up logging and environment.
