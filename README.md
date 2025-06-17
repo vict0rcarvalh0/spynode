@@ -1,48 +1,111 @@
-# Spynode
+🕵️‍♂️ Spynode
+Spynode is a lightweight Solana node designed to simulate a validator for the purpose of accessing block and transaction data with minimal delay — without participating in consensus or block production. This allows faster relaying of real-time transaction data to downstream services like RPC nodes.
 
-## Problem
-The goal of this project is to set up a node that listens to transactions but doesn’t participate in block building. The problem is that RPC nodes get data slower compared to validator nodes. Therefore, we need to simulate or impersonate a validator node to get block data and then forward it to RPC.
+🚨 Problem
+Traditional RPC nodes receive data with a slight delay compared to validator nodes due to their passive role in the network. This latency creates a gap for applications that rely on fast, real-time access to Solana transactions (e.g., bots, dashboards, monitoring tools).
 
-## Solution
-The solution involves creating a node that mimics the behavior of a validator node without participating in the voting or block-building process. This node will listen to transactions and forward the data to RPC nodes to ensure they receive the data faster.
+✅ Solution
+Spynode solves this by mimicking the networking behavior of a validator node to gain early access to transaction and block data — but without voting, staking, or participating in block production. This data is then forwarded to downstream services (e.g., RPC endpoints) in near real-time.
 
-## Simulation
-The node will:
-- Simulate a validator node to get block data.
-- Forward the data to RPC nodes.
-- Avoid participating in the voting or block-building process.
+🧪 Simulation Design
+The node:
 
-## Code Overview
-- **main.rs**  
-  - Initializes logging.  
-  - Creates a gossip socket and determines the node’s public IP.  
-  - Boots up a Solana gossip service via `GossipService::new`.  
-  - Declares a channel (tx, rx) pair of type `Transaction` (string).  
-  - Spawns a thread that forwards received transactions to a configured RPC endpoint.  
-  - Waits for the gossip service to finish.
+Joins the Solana gossip network to observe transactions and block metadata.
 
-- **utils.rs**  
-  - Houses helper methods such as `parse_host_port` for entrypoint URLs.
+Forwards the captured transaction data through a local channel to an external RPC handler.
 
-## How to Run
+Avoids all consensus participation: no voting, no staking, no leader scheduling.
+
+🧠 Architecture Overview
+text
+Copy
+Edit
+ +----------------------+         +------------------+     
+ | Solana Validator Set | <--->  |   Spynode (This) | -->  [RPC Listener / Forwarder]
+ +----------------------+         +------------------+     
+                                        |
+                              [Transaction Channel]
+                                        |
+                              +--------------------+
+                              |  RPC/Webhook Sink  |
+                              +--------------------+
+🧾 Code Overview
+main.rs
+Sets up logging and environment.
+
+Parses entrypoint and determines public IP.
+
+Initializes the GossipService to join the Solana cluster.
+
+Creates a channel (tx, rx) for transferring transactions.
+
+Spawns a forwarding thread to relay received data to an RPC/Webhook endpoint.
+
+utils.rs
+Utility functions including:
+
+parse_host_port() for extracting IP and port from CLI input or config.
+
+Other future helpers for IP resolution, timestamp formatting, etc.
+
+⚙️ How to Use
 1. Clone the repository:
-    ```sh
-    git clone https://github.com/vict0rcarvalh0/spynode.git
-    cd spynode
-    ```
-
+bash
+Copy
+Edit
+git clone https://github.com/vict0rcarvalh0/spynode.git
+cd spynode
 2. Build the project:
-    ```sh
-    cargo build
-    ```
+bash
+Copy
+Edit
+cargo build --release
+3. Run the node:
+bash
+Copy
+Edit
+cargo run --release
+🔧 You may configure the RPC endpoint or entrypoint via command-line args or environment variables (WIP: CLI support).
 
-3. Run the project:
-    ```sh
-    cargo run
-    ```
+🧠 Use Cases
+Real-time transaction indexing
 
-## Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+Trading bots needing fast mempool data
 
-## License
+On-chain monitoring dashboards
+
+Transaction stream analyzers
+
+DeFi bots or arbitrage scanners
+
+🔒 Security Considerations
+This node does not stake or vote, and therefore holds no funds or private keys.
+
+Ensure that forwarded data over the network is protected (e.g., use HTTPS or secure websockets for RPC).
+
+Limit exposure to external RPC endpoints to avoid leaking transaction flow unnecessarily.
+
+📌 Roadmap
+ CLI support for custom RPC/webhook endpoints
+
+ Transaction filtering (e.g., by program ID or address)
+
+ Optional TLS/WebSocket support for secure forwarding
+
+ JSON output option
+
+ Dashboard or log viewer
+
+ Docker container and deployment guide
+
+🤝 Contributing
+Contributions are welcome! Feel free to:
+
+Open issues for bugs or suggestions
+
+Fork the repo and submit pull requests
+
+Add logging, metrics, filters, or CLI tools
+
+🪪 License
 This project is licensed under the MIT License.
